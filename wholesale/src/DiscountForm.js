@@ -1,64 +1,60 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 
-const PromotionForm = () => {
-  const [promotionProductId, setPromotionProductId] = useState("");
-  const [discountAmount, setDiscountAmount] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+const PromotionsDisplayPage = () => {
+  const [promotions, setPromotions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handlePromotionSubmit = (e) => {
-    e.preventDefault();
-    console.log(
-      `Applying ${discountAmount} discount to product ID ${promotionProductId} from ${startDate} to ${endDate}`
-    );
-    setPromotionProductId("");
-    setDiscountAmount("");
-    setStartDate("");
-    setEndDate("");
-  };
+  useEffect(() => {
+    const fetchPromotions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("promotions")
+          .select("id, product_id, discount_amount, start_date, end_date, created_at, updated_at");
+        if (error) {
+          console.error("Error fetching promotions:", error);
+          setError(error);
+        } else {
+          setPromotions(data);
+        }
+      } catch (err) {
+        console.error("Error fetching promotions:", err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPromotions();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error fetching promotions: {error.message}</div>;
+  }
 
   return (
-    <form onSubmit={handlePromotionSubmit}>
-      <h2>Promotions and Discounts</h2>
-      <div>
-        <label>Product ID:</label>
-        <input
-          type="text"
-          value={promotionProductId}
-          onChange={(e) => setPromotionProductId(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <label>Discount Amount/Percentage:</label>
-        <input
-          type="text"
-          value={discountAmount}
-          onChange={(e) => setDiscountAmount(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <label>Start Date:</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <label>End Date:</label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          required
-        />
-      </div>
-      <button type="submit">Apply Promotion</button>
-    </form>
+    <div>
+      <h2>Promotions</h2>
+      <ul>
+        {promotions.map((promotion) => (
+          <li key={promotion.id}>
+            <p>Product ID: {promotion.product_id}</p>
+            <p>Discount Amount: ${promotion.discount_amount}</p>
+            <p>Start Date: {new Date(promotion.start_date).toLocaleString()}</p>
+            <p>End Date: {new Date(promotion.end_date).toLocaleString()}</p>
+            <p>Created At: {new Date(promotion.created_at).toLocaleString()}</p>
+            <p>Updated At: {new Date(promotion.updated_at).toLocaleString()}</p>
+            <hr />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 
-export default PromotionForm;
+export default PromotionsDisplayPage;

@@ -5,8 +5,7 @@ import WholesalerDashboard from  './WSDB';
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
-  const [userType, setUserType] = useState(null); // State to manage user type
-
+  const [userType, setUserType] = useState(null); 
   return (
     <div className="flex flex-col justify-center items-center bg-gray-100 h-screen">
       {isLogin ? (
@@ -22,7 +21,6 @@ function App() {
         Switch to {isLogin ? 'Register' : 'Login'}
       </button>
       
-      {/* Render user-specific dashboard based on userType */}
       {userType && (
         <div className="mt-6 p-4 bg-white shadow rounded">
           {userType === 1 && <p>Welcome User!</p>}

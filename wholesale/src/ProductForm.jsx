@@ -1,138 +1,154 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from 'react';
+import { supabase } from './supabaseClient';
 
-const ProductForm = ({ product, onSubmit }) => {
-  const [productName, setProductName] = useState("");
-  const [productDescription, setProductDescription] = useState("");
-  const [productPrice, setProductPrice] = useState("");
-  const [productQuantity, setProductQuantity] = useState("");
-  const [productCategory, setProductCategory] = useState("");
-  const [productImage, setProductImage] = useState(null); // Add image state
+const ProductForm = () => {
+  const [name, setName] = useState('');
+  const [wholesalerId, setWholesalerId] = useState('');
+  const [description, setDescription] = useState('');
+  const [pricePerUnit, setPricePerUnit] = useState('');
+  const [bulkPrice, setBulkPrice] = useState('');
+  const [minimumOrderQuantity, setMinimumOrderQuantity] = useState('');
+  const [stock, setStock] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
-  // Update form fields if editing
-  useEffect(() => {
-    if (product) {
-      setProductName(product.name);
-      setProductDescription(product.description);
-      setProductPrice(product.price);
-      setProductQuantity(product.quantity);
-      setProductCategory(product.category);
-      setProductImage(product.image || null);
-    }
-  }, [product]);
-
-  const handleImageChange = (e) => {
-    setProductImage(e.target.files[0]);
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
 
-    const newProduct = {
-      id: product?.id || null,
-      name: productName,
-      description: productDescription,
-      price: productPrice,
-      quantity: productQuantity,
-      category: productCategory,
-      image: productImage
-    };
+    try {
+      const { data, error } = await supabase
+        .from('wholesaleproducts')
+        .insert([
+          {
+            wholesaler_id: wholesalerId,
+            name,
+            description,
+            price_per_unit: parseFloat(pricePerUnit),
+            bulk_price: parseFloat(bulkPrice),
+            minimum_order_quantity: parseInt(minimumOrderQuantity),
+            stock: parseInt(stock),
+            image_url: imageUrl,
+          },
+        ]);
 
-    onSubmit(newProduct);
+      if (error) {
+        throw error;
+      }
 
-    setProductName("");
-    setProductDescription("");
-    setProductPrice("");
-    setProductQuantity("");
-    setProductCategory("");
-    setProductImage(null); // Clear image
+      setSuccess('Product added successfully!');
+      // Clear the form fields
+      setName('');
+      setWholesalerId('');
+      setDescription('');
+      setPricePerUnit('');
+      setBulkPrice('');
+      setMinimumOrderQuantity('');
+      setStock('');
+      setImageUrl('');
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-md">
-  <h2 className="text-2xl font-semibold mb-6">
-    {product ? 'Edit Product' : 'Add Product'}
-  </h2>
-
-  <div className="grid grid-cols-1 gap-6 mb-6">
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2" aria-label="Product Name">Product Name:</label>
-      <input
-        type="text"
-        value={productName}
-        onChange={(e) => setProductName(e.target.value)}
-        required
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2" aria-label="Description">Description:</label>
-      <textarea
-        value={productDescription}
-        onChange={(e) => setProductDescription(e.target.value)}
-        required
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      ></textarea>
-    </div>
-
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2" aria-label="Price">Price:</label>
-      <input
-        type="number"
-        value={productPrice}
-        onChange={(e) => setProductPrice(e.target.value)}
-        required
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2" aria-label="Quantity">Quantity:</label>
-      <input
-        type="number"
-        value={productQuantity}
-        onChange={(e) => setProductQuantity(e.target.value)}
-        required
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2" aria-label="Category">Category:</label>
-      <select
-        value={productCategory}
-        onChange={(e) => setProductCategory(e.target.value)}
-        required
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      >
-        <option value="">Select a category</option>
-        <option value="electronics">Electronics</option>
-        <option value="clothing">Clothing</option>
-        <option value="food">Food</option>
-        <option value="furniture">Furniture</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
-
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2" aria-label="Product Image">Product Image:</label>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleImageChange}
-        required={!product}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-    </div>
-  </div>
-
-  <button
-    type="submit"
-    className="w-full px-3 py-2 bg-blue-500 text-lg text-white font-semibold rounded-md hover:bg-blue-600 transition duration-200"
-  >
-    {product ? 'Update Product' : 'Add Product'}
-  </button>
-</form>
+    <form onSubmit={handleSubmit}>
+      <h2>Add a New Product</h2>
+      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+      {success && <p style={{ color: 'green' }}>{success}</p>}
+      <div>
+        <label>
+          Wholesaler ID:
+          <input
+            type="text"
+            value={wholesalerId}
+            onChange={(e) => setWholesalerId(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Name:
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Description:
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Price per Unit:
+          <input
+            type="number"
+            value={pricePerUnit}
+            onChange={(e) => setPricePerUnit(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Bulk Price:
+          <input
+            type="number"
+            value={bulkPrice}
+            onChange={(e) => setBulkPrice(e.target.value)}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Minimum Order Quantity:
+          <input
+            type="number"
+            value={minimumOrderQuantity}
+            onChange={(e) => setMinimumOrderQuantity(e.target.value)}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Stock:
+          <input
+            type="number"
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Image URL:
+          <input
+            type="text"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+          />
+        </label>
+      </div>
+      <button type="submit" disabled={loading}>
+        {loading ? 'Adding...' : 'Add Product'}
+      </button>
+    </form>
   );
 };
 
